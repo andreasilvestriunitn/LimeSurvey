@@ -75,6 +75,8 @@ class QuestionAttributeFetcher
      */
     public function populateValues($attributeDefinitions, $language = null)
     {
+        global $thissurvey;
+
         if (empty($attributeDefinitions)) {
             return [];
         }
@@ -83,15 +85,32 @@ class QuestionAttributeFetcher
             return $attributeDefinitions;
         }
 
-        static $survey = null;
-        if ($survey === null) {
-            $survey = $this->question->survey;
-        }
-        if (isset($survey->sid) && $survey->sid !== $this->question->sid) {
-            $survey = $this->question->survey;
-        }
-        if ($survey === null) {
-            throw new \Exception(sprintf('This question has no survey - qid = %s', json_encode($this->question->qid)));
+        if (empty($thissurvey)) {
+            static $survey = null;
+            if ($survey === null) {
+                $survey = $this->question->survey;
+            }
+            if (isset($survey->sid) && $survey->sid !== $this->question->sid) {
+                $survey = $this->question->survey;
+            }
+            if ($survey === null) {
+                throw new \Exception(sprintf('This question has no survey - qid = %s', json_encode($this->question->qid)));
+            }
+
+            $languages = is_null($language) ? $survey->allLanguages : [$language];
+        } else {
+            if (is_null($language)) {
+                $aLanguages = trim($thissurvey['additional_languages']);
+                $languages = array();
+                if(!empty($aLanguages)) $languages = explode(' ', $aLanguages);
+                if (empty($languages)) {
+                    $languages = array($thissurvey['language']);
+                } else {
+                    array_unshift($languages, $thissurvey['language']);
+                }
+            } else {
+                $languages = [$language];
+            }
         }
 
         $questionAttributeHelper = new QuestionAttributeHelper();
