@@ -227,6 +227,8 @@ class QuestionAttribute extends LSActiveRecord
      */
     public function getQuestionAttributes($q, $sLanguage = null)
     {
+        global $thissurvey;
+
         $receivedIDOnly = (!($q instanceof Question));
         if ($receivedIDOnly) {
             $iQuestionID = intval($q);
@@ -255,7 +257,22 @@ class QuestionAttribute extends LSActiveRecord
         $questionAttributeHelper = new QuestionAttributeHelper();
         $aQuestionAttributes = $questionAttributeHelper->getQuestionAttributesWithValues($oQuestion, $sLanguage);
 
-        $aLanguages = empty($sLanguage) ? $oQuestion->survey->allLanguages : [$sLanguage];
+        if (empty($thissurvey)) {
+            $aLanguages = empty($sLanguage) ? $oQuestion->survey->allLanguages : [$sLanguage];
+        } else {
+            if(empty($sLanguage)) {
+                $addLanguages = trim($thissurvey['additional_languages']);
+                $aLanguages = array();
+                if(!empty($addLanguages)) $aLanguages = explode(' ', $addLanguages);
+                if (empty($aLanguages)) {
+                    $aLanguages = array($thissurvey['language']);
+                } else {
+                    array_unshift($aLanguages, $thissurvey['language']);
+                }
+            } else {
+                $aLanguages = [$sLanguage];
+            }            
+        }        
 
         $aAttributeValues = [];
         foreach ($aQuestionAttributes as $aAttribute) {
